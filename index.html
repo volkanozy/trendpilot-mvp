@@ -8,75 +8,69 @@
 <style>
 
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f172a, #020617);
-    color: white;
-    margin: 0;
-    padding: 20px;
+font-family: Arial, sans-serif;
+background: linear-gradient(135deg, #0f172a, #020617);
+color: white;
+margin: 0;
+padding: 20px;
 }
 
 .container {
-    max-width: 600px;
-    margin: auto;
+max-width: 600px;
+margin: auto;
 }
 
 .header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.header h1 {
-    margin: 0;
-    font-size: 32px;
-}
-
-.header p {
-    opacity: 0.7;
+text-align: center;
+margin-bottom: 30px;
 }
 
 .card {
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+background: #1e293b;
+padding: 20px;
+border-radius: 12px;
 }
 
 button {
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 16px;
+background: #3b82f6;
+color: white;
+border: none;
+padding: 14px;
+border-radius: 8px;
+cursor: pointer;
+width: 100%;
+font-size: 16px;
+margin-top: 10px;
 }
 
 button:hover {
-    background: #2563eb;
+background: #2563eb;
 }
 
 input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
+width: 100%;
+padding: 10px;
 }
 
 .result {
-    background: #020617;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 15px;
-    min-height: 80px;
+background: #020617;
+padding: 15px;
+border-radius: 8px;
+margin-top: 15px;
+min-height: 100px;
 }
 
 .badge {
-    display: inline-block;
-    padding: 5px 10px;
-    background: #22c55e;
-    border-radius: 6px;
-    margin-top: 10px;
-    font-size: 12px;
+background: #22c55e;
+padding: 5px 10px;
+border-radius: 6px;
+font-size: 12px;
+}
+
+.limit {
+font-size: 12px;
+opacity: 0.7;
+margin-top: 10px;
 }
 
 </style>
@@ -89,7 +83,8 @@ input {
 <div class="header">
 <h1>TrendPilot AI</h1>
 <p>Ürün fotoğrafı yükle, satış potansiyelini öğren</p>
-<span class="badge">AI Destekli Analiz</span>
+<span class="badge">AI Destekli</span>
+<div id="limitInfo" class="limit"></div>
 </div>
 
 <div class="card">
@@ -97,11 +92,11 @@ input {
 <input type="file" id="imageUpload" accept="image/*">
 
 <button onclick="analyzeImage()">
-Satış Potansiyelini Analiz Et
+Analiz Et
 </button>
 
 <div id="analysisResult" class="result">
-Analiz sonucu burada görünecek...
+Analiz sonucu burada görünecek
 </div>
 
 </div>
@@ -110,74 +105,102 @@ Analiz sonucu burada görünecek...
 
 <script>
 
+const DAILY_LIMIT = 3;
+
+function getUsage() {
+
+const today = new Date().toDateString();
+
+let data = JSON.parse(localStorage.getItem("trendpilot_usage"));
+
+if (!data || data.date !== today) {
+
+data = {
+date: today,
+count: 0
+};
+
+}
+
+return data;
+
+}
+
+function saveUsage(data) {
+
+localStorage.setItem("trendpilot_usage", JSON.stringify(data));
+
+}
+
+function updateLimitInfo() {
+
+let usage = getUsage();
+
+document.getElementById("limitInfo").innerHTML =
+"Günlük ücretsiz analiz hakkı: " +
+(DAILY_LIMIT - usage.count);
+
+}
+
 function analyzeImage() {
 
 const fileInput = document.getElementById("imageUpload");
 
 if (!fileInput.files[0]) {
 
-alert("Lütfen ürün fotoğrafı seç");
+alert("Fotoğraf seç");
 
 return;
 
 }
+
+let usage = getUsage();
+
+if (usage.count >= DAILY_LIMIT) {
+
+document.getElementById("analysisResult").innerHTML =
+
+"<b>Limit doldu.</b><br><br>Premium ile sınırsız analiz açılacak.";
+
+return;
+
+}
+
+usage.count++;
+
+saveUsage(usage);
+
+updateLimitInfo();
 
 document.getElementById("analysisResult").innerHTML =
 "AI analiz ediyor...";
 
 setTimeout(() => {
 
-const trendScore = Math.floor(Math.random() * 30) + 70;
+const trend = Math.floor(Math.random() * 30) + 70;
 
 const profit = Math.floor(Math.random() * 40) + 30;
 
 let competition;
 
-if (trendScore > 85)
+if (trend > 85)
 competition = "Düşük";
-
-else if (trendScore > 75)
+else if (trend > 75)
 competition = "Orta";
-
 else
 competition = "Yüksek";
 
+document.getElementById("analysisResult").innerHTML =
 
-let recommendation;
+"<b>Trend Skoru:</b> " + trend + "/100<br><br>" +
+"<b>Kar Marjı:</b> %" + profit + "<br><br>" +
+"<b>Rekabet:</b> " + competition;
 
-if (trendScore > 85)
-
-recommendation =
-"Yüksek satış potansiyeli. Bu ürün e-ticaret için güçlü aday.";
-
-else if (trendScore > 75)
-
-recommendation =
-"İyi potansiyel. Doğru pazarlama ile başarılı olabilir.";
-
-else
-
-recommendation =
-"Ortalama potansiyel. Niş hedefleme önerilir.";
-
-
-document.getElementById("analysisResult").innerHTML = `
-
-Trend Skoru: ${trendScore}/100<br><br>
-
-Tahmini Kar Marjı: %${profit}<br><br>
-
-Rekabet Seviyesi: ${competition}<br><br>
-
-Stratejik Öneri:<br>
-
-${recommendation}
-
-`;
-
-}, 1500);
+}, 1200);
 
 }
+
+updateLimitInfo();
 
 </script>
 
