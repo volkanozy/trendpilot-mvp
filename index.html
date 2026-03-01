@@ -1,206 +1,165 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TrendPilot AI</title>
+<title>Vibe Coding Analyzer Pro</title>
 
 <style>
 
-body {
-font-family: Arial, sans-serif;
-background: linear-gradient(135deg, #0f172a, #020617);
-color: white;
-margin: 0;
-padding: 20px;
+body{
+font-family:Arial;
+max-width:800px;
+margin:auto;
+padding:20px;
+background:#f4f6f8;
 }
 
-.container {
-max-width: 600px;
-margin: auto;
+textarea{
+width:100%;
+height:150px;
+margin-bottom:10px;
+font-size:16px;
+padding:10px;
 }
 
-.header {
-text-align: center;
-margin-bottom: 30px;
+button{
+padding:12px 20px;
+font-size:16px;
+cursor:pointer;
+background:#0a66c2;
+color:white;
+border:none;
+border-radius:6px;
 }
 
-.card {
-background: #1e293b;
-padding: 20px;
-border-radius: 12px;
+button:hover{
+background:#004182;
 }
 
-button {
-background: #3b82f6;
-color: white;
-border: none;
-padding: 14px;
-border-radius: 8px;
-cursor: pointer;
-width: 100%;
-font-size: 16px;
-margin-top: 10px;
+#result{
+margin-top:20px;
+padding:15px;
+background:white;
+border-radius:6px;
+white-space:pre-wrap;
 }
 
-button:hover {
-background: #2563eb;
-}
-
-input {
-width: 100%;
-padding: 10px;
-}
-
-.result {
-background: #020617;
-padding: 15px;
-border-radius: 8px;
-margin-top: 15px;
-min-height: 100px;
-}
-
-.badge {
-background: #22c55e;
-padding: 5px 10px;
-border-radius: 6px;
-font-size: 12px;
-}
-
-.limit {
-font-size: 12px;
-opacity: 0.7;
-margin-top: 10px;
+#history{
+margin-top:20px;
+background:white;
+padding:10px;
+border-radius:6px;
 }
 
 </style>
 
 </head>
+
 <body>
 
-<div class="container">
+<h2>Vibe Coding Analyzer Pro</h2>
 
-<div class="header">
-<h1>TrendPilot AI</h1>
-<p>Ürün fotoğrafı yükle, satış potansiyelini öğren</p>
-<span class="badge">AI Destekli</span>
-<div id="limitInfo" class="limit"></div>
-</div>
+<textarea id="idea" placeholder="Startup fikrini yaz..."></textarea>
 
-<div class="card">
+<button onclick="analyze()">Analiz Et</button>
 
-<input type="file" id="imageUpload" accept="image/*">
+<div id="result"></div>
 
-<button onclick="analyzeImage()">
-Analiz Et
-</button>
-
-<div id="analysisResult" class="result">
-Analiz sonucu burada görünecek
-</div>
-
-</div>
-
+<div id="history">
+<h3>Geçmiş Analizler</h3>
+<div id="historyList"></div>
 </div>
 
 <script>
 
-const DAILY_LIMIT = 3;
+loadHistory()
 
-function getUsage() {
+async function analyze(){
 
-const today = new Date().toDateString();
+const idea = document.getElementById("idea").value
 
-let data = JSON.parse(localStorage.getItem("trendpilot_usage"));
+if(!idea){
+alert("Fikir gir")
+return
+}
 
-if (!data || data.date !== today) {
+document.getElementById("result").innerHTML="Analiz yapılıyor..."
 
-data = {
-date: today,
-count: 0
-};
+try{
+
+const response = await fetch("/api/analyze", {
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+idea:idea
+})
+
+})
+
+const data = await response.json()
+
+document.getElementById("result").innerHTML=data.result
+
+saveHistory(idea,data.result)
+
+loadHistory()
+
+}catch(e){
+
+document.getElementById("result").innerHTML="Hata oluştu"
 
 }
 
-return data;
+}
+
+
+
+function saveHistory(idea,result){
+
+let history = JSON.parse(localStorage.getItem("history")||"[]")
+
+history.unshift({
+
+idea:idea,
+
+result:result,
+
+date:new Date().toLocaleString()
+
+})
+
+localStorage.setItem("history",JSON.stringify(history))
 
 }
 
-function saveUsage(data) {
 
-localStorage.setItem("trendpilot_usage", JSON.stringify(data));
 
-}
+function loadHistory(){
 
-function updateLimitInfo() {
+let history = JSON.parse(localStorage.getItem("history")||"[]")
 
-let usage = getUsage();
+let html=""
 
-document.getElementById("limitInfo").innerHTML =
-"Günlük ücretsiz analiz hakkı: " +
-(DAILY_LIMIT - usage.count);
+history.slice(0,5).forEach(item=>{
 
-}
+html+=`
+<div style="margin-bottom:10px;">
+<b>${item.date}</b><br>
+${item.idea}
+</div>
+<hr>
+`
 
-function analyzeImage() {
+})
 
-const fileInput = document.getElementById("imageUpload");
-
-if (!fileInput.files[0]) {
-
-alert("Fotoğraf seç");
-
-return;
+document.getElementById("historyList").innerHTML=html
 
 }
-
-let usage = getUsage();
-
-if (usage.count >= DAILY_LIMIT) {
-
-document.getElementById("analysisResult").innerHTML =
-
-"<b>Limit doldu.</b><br><br>Premium ile sınırsız analiz açılacak.";
-
-return;
-
-}
-
-usage.count++;
-
-saveUsage(usage);
-
-updateLimitInfo();
-
-document.getElementById("analysisResult").innerHTML =
-"AI analiz ediyor...";
-
-setTimeout(() => {
-
-const trend = Math.floor(Math.random() * 30) + 70;
-
-const profit = Math.floor(Math.random() * 40) + 30;
-
-let competition;
-
-if (trend > 85)
-competition = "Düşük";
-else if (trend > 75)
-competition = "Orta";
-else
-competition = "Yüksek";
-
-document.getElementById("analysisResult").innerHTML =
-
-"<b>Trend Skoru:</b> " + trend + "/100<br><br>" +
-"<b>Kar Marjı:</b> %" + profit + "<br><br>" +
-"<b>Rekabet:</b> " + competition;
-
-}, 1200);
-
-}
-
-updateLimitInfo();
 
 </script>
 
