@@ -12,12 +12,39 @@ app.post("/api/analyze", async (req,res)=>{
 const idea = req.body.idea
 
 const prompt = `
-You are a senior startup investor.
+You are a senior startup investor and SaaS expert.
 
-Analyze this idea:
+Analyze this startup idea professionally:
+
+Idea:
 ${idea}
 
-Give score, revenue potential, strengths, weaknesses and roadmap.
+Return response in this format:
+
+STARTUP SCORE: X/10
+
+SUCCESS PROBABILITY: X%
+
+POTENTIAL REVENUE: $X/month after 12 months
+
+TARGET MARKET:
+(description)
+
+BUSINESS MODEL:
+(description)
+
+STRENGTHS:
+- point
+- point
+
+WEAKNESSES:
+- point
+- point
+
+NEXT STEPS:
+1. step
+2. step
+3. step
 `
 
 try{
@@ -36,7 +63,11 @@ body:JSON.stringify({
 model:"openai/gpt-4o-mini",
 
 messages:[
-{role:"user",content:prompt}
+{
+role:"user",
+content:prompt
+}
+
 ]
 
 })
